@@ -12,6 +12,7 @@ type UserRepository interface {
 	CreateUser(ctx context.Context, user *domain.User) (*int, error)
 	UpdateUser(ctx context.Context, user *domain.User) error
 	DeleteUser(ctx context.Context, id int) error
+	FindUserByEmail(ctx context.Context, email string) (*domain.User, error)
 }
 
 type userRepository struct {
@@ -81,4 +82,18 @@ func (r *userRepository) DeleteUser(ctx context.Context, id int) error {
 	query := "DELETE FROM users WHERE id = $1"
 	_, err := r.db.ExecContext(ctx, query, id)
 	return err
+}
+
+func (r *userRepository) FindUserByEmail(ctx context.Context, email string) (*domain.User, error) {
+	query := "SELECT id, username, password, email, created_at, updated_at FROM users WHERE email = $1"
+	row := r.db.QueryRowContext(ctx, query, email)
+	var user domain.User
+	err := row.Scan(&user)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, err // No user found with the given email
+		}
+		return nil, err
+	}
+	return &user, err
 }
