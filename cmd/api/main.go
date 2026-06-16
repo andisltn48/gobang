@@ -17,11 +17,14 @@ func main() {
 	// memberRepo := repository.NewMemberRepository(db)
 
 	authService := service.NewAuthService(userRepo)
+	userService := service.NewUserService(userRepo)
 
 	authHandler := handler.NewAuthHandler(authService)
+	userHandler := handler.NewUserHandler(userService)
 
 	mux := http.NewServeMux()
 	handler.AuthRoutes(mux, authHandler)
+	handler.UserRoutes(mux, userHandler)
 
 	log.Println("Starting server on :8080")
 	err := http.ListenAndServe(":8080", mux)

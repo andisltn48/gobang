@@ -15,6 +15,7 @@ import (
 type AuthService interface {
 	Register(ctx context.Context, request dto.RegisterDTO) (*int, error)
 	Login(ctx context.Context, request dto.LoginDTO) (string, error)
+	GetUserByID(ctx context.Context, id int) (*domain.User, error)
 }
 
 type authService struct {
@@ -75,4 +76,17 @@ func (s *authService) Login(ctx context.Context, request dto.LoginDTO) (string, 
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(jwtSecret)
+}
+
+func (s *authService) GetUserByID(ctx context.Context, id int) (*domain.User, error) {
+	user, err := s.userRepo.GetUserByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	if user == nil {
+		return nil, errors.New("user not found")
+	}
+
+	return user, nil
 }

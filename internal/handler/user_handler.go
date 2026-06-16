@@ -22,24 +22,25 @@ func (h *UserHandler) GetUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userResponse := make([]dto.UserResponseDTO,0)
+	userResponse := make([]dto.UserResponseDTO, 0)
 	for _, user := range users {
-		memberData := dto.MemberResponseDTO{
-			ID: user.Member.ID,
-			FirstName: user.Member.FirstName,
-			LastName: user.Member.LastName,
-			Saldo: user.Member.Saldo,
+		userData := dto.UserResponseDTO{
+			ID:       user.ID,
+			Username: user.Username,
+			Email:    user.Email,
 		}
 
-		userData := dto.UserResponseDTO{
-			ID: user.ID,
-			Username: user.Username,
-			Email: user.Email,
-			Member: memberData,
+		// Only populate member if exists
+		if user.Member != nil {
+			userData.Member = &dto.MemberResponseDTO{
+				ID:        user.Member.ID,
+				FirstName: user.Member.FirstName,
+				LastName:  user.Member.LastName,
+				Saldo:     user.Member.Saldo,
+			}
 		}
 
 		userResponse = append(userResponse, userData)
-
 	}
 
 	result := map[string]interface{}{

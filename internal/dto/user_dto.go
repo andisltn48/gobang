@@ -8,8 +8,8 @@ type UserRequestDTO struct {
 }
 
 type UserResponseDTO struct {
-	ID       int    `json:"id"`
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Member	MemberResponseDTO 
+	ID       int                `json:"id"`
+	Username string             `json:"username"`
+	Email    string             `json:"email"`
+	Member   *MemberResponseDTO `json:"member,omitempty"`
 }

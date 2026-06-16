@@ -76,3 +76,24 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(utils.UserIDKey).(int)
+	if !ok {
+		utils.ErrorResponse(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	user, err := h.authService.GetUserByID(r.Context(), userID)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusNotFound, "User not found")
+		return
+	}
+
+	response := map[string]interface{}{
+		"id":       user.ID,
+		"username": user.Username,
+		"email":    user.Email,
+	}
+	utils.JsonResponse(w, http.StatusOK, response)
+}
+

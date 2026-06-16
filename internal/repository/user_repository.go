@@ -24,7 +24,7 @@ func NewUserRepository(db *sql.DB) UserRepository {
 }
 
 func (r *userRepository) GetUsers(ctx context.Context) ([]domain.User, error) {
-	query := "SELECT u.id, u.username, u.email, u.created_at, u.updated_at, m.id, m.first_name, m.last_name, m.saldo, m.created_at, m.updated_at FROM users u JOIN member_details m ON u.id = m.user_id"
+	query := "SELECT u.id, u.username, u.email, u.created_at, u.updated_at, m.id, m.first_name, m.last_name, m.saldo, m.created_at, m.updated_at FROM users u LEFT JOIN member_details m ON u.id = m.user_id"
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
@@ -34,30 +34,93 @@ func (r *userRepository) GetUsers(ctx context.Context) ([]domain.User, error) {
 	var users []domain.User
 	for rows.Next() {
 		var user domain.User
-		var member domain.Member
-		err := rows.Scan(&user.ID, &user.Username, &user.Email, &user.CreatedAt, &user.UpdatedAt, &member.ID, &member.FirstName, &member.LastName, &member.Saldo, &member.CreatedAt, &member.UpdatedAt)
+		var memberID sql.NullInt64
+		var firstName sql.NullString
+		var lastName sql.NullString
+		var saldo sql.NullInt64
+		var memberCreatedAt sql.NullTime
+		var memberUpdatedAt sql.NullTime
+
+		err := rows.Scan(
+			&user.ID,
+			&user.Username,
+			&user.Email,
+			&user.CreatedAt,
+			&user.UpdatedAt,
+			&memberID,
+			&firstName,
+			&lastName,
+			&saldo,
+			&memberCreatedAt,
+			&memberUpdatedAt,
+		)
+
 		if err != nil {
 			return nil, err
 		}
-		user.Member = member
+
+		// Only populate member if data exists
+		if memberID.Valid && memberID.Int64 != 0 {
+			user.Member = &domain.Member{
+				ID:        int(memberID.Int64),
+				FirstName: firstName.String,
+				LastName:  lastName.String,
+				Saldo:     int(saldo.Int64),
+				CreatedAt: memberCreatedAt.Time,
+				UpdatedAt: memberUpdatedAt.Time,
+			}
+		}
+
 		users = append(users, user)
 	}
 	return users, nil
 }
 
 func (r *userRepository) GetUserByID(ctx context.Context, id int) (*domain.User, error) {
-	query := "SELECT u.id, u.username, u.email, u.created_at, u.updated_at, m.id, m.first_name, m.last_name, m.saldo, m.created_at, m.updated_at FROM users u JOIN member_details m ON u.id = m.user_id WHERE u.id = $1"
+	query := "SELECT u.id, u.username, u.email, u.created_at, u.updated_at, m.id, m.first_name, m.last_name, m.saldo, m.created_at, m.updated_at FROM users u LEFT JOIN member_details m ON u.id = m.user_id WHERE u.id = $1"
 	row := r.db.QueryRowContext(ctx, query, id)
+
 	var user domain.User
-	var member domain.Member
-	err := row.Scan(&user.ID, &user.Username, &user.Email, &user.CreatedAt, &user.UpdatedAt, &member.ID, &member.FirstName, &member.LastName, &member.Saldo, &member.CreatedAt, &member.UpdatedAt)
+	var memberID sql.NullInt64
+	var firstName sql.NullString
+	var lastName sql.NullString
+	var saldo sql.NullInt64
+	var memberCreatedAt sql.NullTime
+	var memberUpdatedAt sql.NullTime
+
+	err := row.Scan(
+		&user.ID,
+		&user.Username,
+		&user.Email,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+		&memberID,
+		&firstName,
+		&lastName,
+		&saldo,
+		&memberCreatedAt,
+		&memberUpdatedAt,
+	)
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil // No user found with the given ID
 		}
 		return nil, err
 	}
-	user.Member = member
+
+	// Only populate member if data exists
+	if memberID.Valid && memberID.Int64 != 0 {
+		user.Member = &domain.Member{
+			ID:        int(memberID.Int64),
+			FirstName: firstName.String,
+			LastName:  lastName.String,
+			Saldo:     int(saldo.Int64),
+			CreatedAt: memberCreatedAt.Time,
+			UpdatedAt: memberUpdatedAt.Time,
+		}
+	}
+
 	return &user, nil
 }
 
