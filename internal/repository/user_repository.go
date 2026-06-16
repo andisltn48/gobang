@@ -88,7 +88,7 @@ func (r *userRepository) FindUserByEmail(ctx context.Context, email string) (*do
 	query := "SELECT id, username, password, email, created_at, updated_at FROM users WHERE email = $1"
 	row := r.db.QueryRowContext(ctx, query, email)
 	var user domain.User
-	err := row.Scan(&user)
+	err := row.Scan(&user.ID, &user.Username, &user.Password, &user.Email, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, err // No user found with the given email

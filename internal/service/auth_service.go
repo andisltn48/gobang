@@ -58,7 +58,7 @@ func (s *authService) Login(ctx context.Context, request dto.LoginDTO) (string, 
 	user, err := s.userRepo.FindUserByEmail(ctx, request.Email)
 
 	if err != nil {
-		return "", errors.New("email not found")
+		return "", errors.New(err.Error())
 	}
 
 	// 2. Verifikasi Bcrypt password
